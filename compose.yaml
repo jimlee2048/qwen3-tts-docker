@@ -6,5 +6,10 @@ services:
       - "7860:7860"
     environment:
       ATTN_IMPLEMENTATION: kernels-community/flash-attn
+      # Hugging Face cache root inside the container
+      HF_HOME: /root/.cache/huggingface
+    # To persist HF cache on the host, bind mount the same path:
+    # volumes:
+    #   - /path/to/huggingface:/root/.cache/huggingface
     gpus: all
     restart: unless-stopped
