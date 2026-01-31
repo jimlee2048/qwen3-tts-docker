@@ -13,19 +13,20 @@ RUN apt-get update \
         python3.12 \
         python3.12-dev \
         python3.12-venv \
-        python3-pip \
         sox \
     && rm -rf /var/lib/apt/lists/*
 
-RUN python3.12 -m pip install --upgrade pip
+RUN python3.12 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+RUN pip install --upgrade pip
 
 WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 
-RUN python3.12 -m pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 COPY . /app
 
 EXPOSE 7860
 
-CMD ["python3.12", "app.py"]
+CMD ["python", "app.py"]
