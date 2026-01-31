@@ -1,27 +1,44 @@
 # coding=utf-8
-# Qwen3-TTS Gradio Demo for HuggingFace Spaces with Zero GPU
+# Qwen3-TTS Gradio Demo
 # Supports: Voice Design, Voice Clone (Base), TTS (CustomVoice)
-#import subprocess
-#subprocess.run('pip install flash-attn==2.7.4.post1', shell=True)
 import os
-import spaces
 import gradio as gr
 import numpy as np
 import torch
-from huggingface_hub import snapshot_download, login
+from huggingface_hub import snapshot_download
 from qwen_tts import Qwen3TTSModel
 
-HF_TOKEN = os.environ.get('HF_TOKEN')
-login(token=HF_TOKEN)
+ATTN_IMPLEMENTATION = os.environ.get(
+    "ATTN_IMPLEMENTATION", "kernels-community/flash-attn"
+)
 
 # Model size options
 MODEL_SIZES = ["0.6B", "1.7B"]
 
 # Speaker and language choices for CustomVoice model
 SPEAKERS = [
-    "Aiden", "Dylan", "Eric", "Ono_anna", "Ryan", "Serena", "Sohee", "Uncle_fu", "Vivian"
+    "Aiden",
+    "Dylan",
+    "Eric",
+    "Ono_anna",
+    "Ryan",
+    "Serena",
+    "Sohee",
+    "Uncle_fu",
+    "Vivian",
 ]
-LANGUAGES = ["Auto", "Chinese", "English", "Japanese", "Korean", "French", "German", "Spanish", "Portuguese", "Russian"]
+LANGUAGES = [
+    "Auto",
+    "Chinese",
+    "English",
+    "Japanese",
+    "Korean",
+    "French",
+    "German",
+    "Spanish",
+    "Portuguese",
+    "Russian",
+]
 
 
 def get_model_path(model_type: str, model_size: str) -> str:
@@ -40,8 +57,7 @@ voice_design_model = Qwen3TTSModel.from_pretrained(
     get_model_path("VoiceDesign", "1.7B"),
     device_map="cuda",
     dtype=torch.bfloat16,
-    token=HF_TOKEN,
-    attn_implementation="kernels-community/flash-attn3",
+    attn_implementation=ATTN_IMPLEMENTATION,
 )
 
 # Base (Voice Clone) models - both sizes
@@ -50,8 +66,7 @@ base_model_0_6b = Qwen3TTSModel.from_pretrained(
     get_model_path("Base", "0.6B"),
     device_map="cuda",
     dtype=torch.bfloat16,
-    token=HF_TOKEN,
-    attn_implementation="kernels-community/flash-attn3",
+    attn_implementation=ATTN_IMPLEMENTATION,
 )
 
 print("Loading Base 1.7B model...")
@@ -59,8 +74,7 @@ base_model_1_7b = Qwen3TTSModel.from_pretrained(
     get_model_path("Base", "1.7B"),
     device_map="cuda",
     dtype=torch.bfloat16,
-    token=HF_TOKEN,
-    attn_implementation="kernels-community/flash-attn3",
+    attn_implementation=ATTN_IMPLEMENTATION,
 )
 
 # CustomVoice models - both sizes
@@ -69,8 +83,7 @@ custom_voice_model_0_6b = Qwen3TTSModel.from_pretrained(
     get_model_path("CustomVoice", "0.6B"),
     device_map="cuda",
     dtype=torch.bfloat16,
-    token=HF_TOKEN,
-    attn_implementation="kernels-community/flash-attn3",
+    attn_implementation=ATTN_IMPLEMENTATION,
 )
 
 print("Loading CustomVoice 1.7B model...")
@@ -78,8 +91,7 @@ custom_voice_model_1_7b = Qwen3TTSModel.from_pretrained(
     get_model_path("CustomVoice", "1.7B"),
     device_map="cuda",
     dtype=torch.bfloat16,
-    token=HF_TOKEN,
-    attn_implementation="kernels-community/flash-attn3",
+    attn_implementation=ATTN_IMPLEMENTATION,
 )
 
 print("All models loaded successfully!")
@@ -144,8 +156,9 @@ def _audio_to_tuple(audio):
     return None
 
 
-@spaces.GPU(duration=60)
-def generate_voice_design(text, language, voice_description, progress=gr.Progress(track_tqdm=True)):
+def generate_voice_design(
+    text, language, voice_description, progress=gr.Progress(track_tqdm=True)
+):
     """Generate speech using Voice Design model (1.7B only)."""
     if not text or not text.strip():
         return None, "Error: Text is required."
@@ -165,8 +178,15 @@ def generate_voice_design(text, language, voice_description, progress=gr.Progres
         return None, f"Error: {type(e).__name__}: {e}"
 
 
-@spaces.GPU(duration=60)
-def generate_voice_clone(ref_audio, ref_text, target_text, language, use_xvector_only, model_size, progress=gr.Progress(track_tqdm=True)):
+def generate_voice_clone(
+    ref_audio,
+    ref_text,
+    target_text,
+    language,
+    use_xvector_only,
+    model_size,
+    progress=gr.Progress(track_tqdm=True),
+):
     """Generate speech using Base (Voice Clone) model."""
     if not target_text or not target_text.strip():
         return None, "Error: Target text is required."
@@ -176,7 +196,10 @@ def generate_voice_clone(ref_audio, ref_text, target_text, language, use_xvector
         return None, "Error: Reference audio is required."
 
     if not use_xvector_only and (not ref_text or not ref_text.strip()):
-        return None, "Error: Reference text is required when 'Use x-vector only' is not enabled."
+        return (
+            None,
+            "Error: Reference text is required when 'Use x-vector only' is not enabled.",
+        )
 
     try:
         tts = BASE_MODELS[model_size]
@@ -193,8 +216,9 @@ def generate_voice_clone(ref_audio, ref_text, target_text, language, use_xvector
         return None, f"Error: {type(e).__name__}: {e}"
 
 
-@spaces.GPU(duration=60)
-def generate_custom_voice(text, language, speaker, instruct, model_size, progress=gr.Progress(track_tqdm=True)):
+def generate_custom_voice(
+    text, language, speaker, instruct, model_size, progress=gr.Progress(track_tqdm=True)
+):
     """Generate speech using CustomVoice model."""
     if not text or not text.strip():
         return None, "Error: Text is required."
@@ -249,7 +273,7 @@ Built with [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by Alibaba Qwen Team
                             label="Text to Synthesize",
                             lines=4,
                             placeholder="Enter the text you want to convert to speech...",
-                            value="It's in the top drawer... wait, it's empty? No way, that's impossible! I'm sure I put it there!"
+                            value="It's in the top drawer... wait, it's empty? No way, that's impossible! I'm sure I put it there!",
                         )
                         design_language = gr.Dropdown(
                             label="Language",
@@ -261,13 +285,19 @@ Built with [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by Alibaba Qwen Team
                             label="Voice Description",
                             lines=3,
                             placeholder="Describe the voice characteristics you want...",
-                            value="Speak in an incredulous tone, but with a hint of panic beginning to creep into your voice."
+                            value="Speak in an incredulous tone, but with a hint of panic beginning to creep into your voice.",
                         )
-                        design_btn = gr.Button("Generate with Custom Voice", variant="primary")
+                        design_btn = gr.Button(
+                            "Generate with Custom Voice", variant="primary"
+                        )
 
                     with gr.Column(scale=2):
-                        design_audio_out = gr.Audio(label="Generated Audio", type="numpy")
-                        design_status = gr.Textbox(label="Status", lines=2, interactive=False)
+                        design_audio_out = gr.Audio(
+                            label="Generated Audio", type="numpy"
+                        )
+                        design_status = gr.Textbox(
+                            label="Status", lines=2, interactive=False
+                        )
 
                 design_btn.click(
                     generate_voice_design,
@@ -317,11 +347,20 @@ Built with [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by Alibaba Qwen Team
 
                 with gr.Row():
                     clone_audio_out = gr.Audio(label="Generated Audio", type="numpy")
-                    clone_status = gr.Textbox(label="Status", lines=2, interactive=False)
+                    clone_status = gr.Textbox(
+                        label="Status", lines=2, interactive=False
+                    )
 
                 clone_btn.click(
                     generate_voice_clone,
-                    inputs=[clone_ref_audio, clone_ref_text, clone_target_text, clone_language, clone_xvector, clone_model_size],
+                    inputs=[
+                        clone_ref_audio,
+                        clone_ref_text,
+                        clone_target_text,
+                        clone_language,
+                        clone_xvector,
+                        clone_model_size,
+                    ],
                     outputs=[clone_audio_out, clone_status],
                 )
 
@@ -334,7 +373,7 @@ Built with [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by Alibaba Qwen Team
                             label="Text to Synthesize",
                             lines=4,
                             placeholder="Enter the text you want to convert to speech...",
-                            value="Hello! Welcome to Text-to-Speech system. This is a demo of our TTS capabilities."
+                            value="Hello! Welcome to Text-to-Speech system. This is a demo of our TTS capabilities.",
                         )
                         with gr.Row():
                             tts_language = gr.Dropdown(
@@ -365,21 +404,21 @@ Built with [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by Alibaba Qwen Team
 
                     with gr.Column(scale=2):
                         tts_audio_out = gr.Audio(label="Generated Audio", type="numpy")
-                        tts_status = gr.Textbox(label="Status", lines=2, interactive=False)
+                        tts_status = gr.Textbox(
+                            label="Status", lines=2, interactive=False
+                        )
 
                 tts_btn.click(
                     generate_custom_voice,
-                    inputs=[tts_text, tts_language, tts_speaker, tts_instruct, tts_model_size],
+                    inputs=[
+                        tts_text,
+                        tts_language,
+                        tts_speaker,
+                        tts_instruct,
+                        tts_model_size,
+                    ],
                     outputs=[tts_audio_out, tts_status],
                 )
-
-        gr.Markdown(
-            """
----
-**Note**: This demo uses HuggingFace Spaces Zero GPU. Each generation has a time limit.
-For longer texts, please split them into smaller segments.
-"""
-        )
 
     return demo
 
