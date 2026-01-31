@@ -251,7 +251,7 @@ def build_ui():
     .tab-content {padding: 20px;}
     """
 
-    with gr.Blocks(theme=theme, css=css, title="Qwen3-TTS Demo") as demo:
+    with gr.Blocks(title="Qwen3-TTS Demo") as demo:
         gr.Markdown(
             """
 # Qwen3-TTS Demo
@@ -420,9 +420,14 @@ Built with [Qwen3-TTS](https://github.com/QwenLM/Qwen3-TTS) by Alibaba Qwen Team
                     outputs=[tts_audio_out, tts_status],
                 )
 
-    return demo
+    return demo, theme, css
 
 
 if __name__ == "__main__":
-    demo = build_ui()
-    demo.launch()
+    demo, theme, css = build_ui()
+    demo.launch(
+        theme=theme,
+        css=css,
+        server_name=os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0"),
+        server_port=int(os.environ.get("GRADIO_SERVER_PORT", "7860")),
+    )
