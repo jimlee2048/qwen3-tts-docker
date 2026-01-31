@@ -1,5 +1,7 @@
 # Qwen3-TTS Docker Usage
 
+Fork from [Qwen3-TTS Demo - Huggingface Space](https://huggingface.co/spaces/Qwen/Qwen3-TTS).
+
 ## Build
 
 ```bash
