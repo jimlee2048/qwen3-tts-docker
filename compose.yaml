@@ -8,7 +8,9 @@ services:
       ATTN_IMPLEMENTATION: kernels-community/flash-attn
       # Hugging Face cache root inside the container
       HF_HOME: /root/.cache/huggingface
-    # To persist HF cache on the host, bind mount the same path:
+      # For Chinese Mainland users, you may need to use a mirror HuggingFace endpoint
+      # HF_ENDPOINT: https://hf-mirror.com
+    # To persist model cache on the host, bind mount the HF_HOME:
     # volumes:
     #   - /path/to/huggingface:/root/.cache/huggingface
     gpus: all

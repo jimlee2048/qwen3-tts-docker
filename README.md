@@ -25,7 +25,7 @@ Open `http://localhost:7860` in your browser.
 
 ### Docker Compose
 
-Update the image in `compose.yaml`, then run:
+Prepare your compose configuration by referencing [compose.yaml](https://raw.githubusercontent.com/jimlee2048/qwen3-tts-demo/refs/heads/main/compose.yaml), then run:
 
 ```bash
 docker compose up -d
